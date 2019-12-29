@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <deque>
 #include <stdint.h>
 #include <vector>
 
@@ -22,28 +23,36 @@ template <typename T>
 class CMedianFilter
 {
 private:
-    std::vector<T> vValues;
+    std::deque<T> vValues;
     std::vector<T> vSorted;
     unsigned int nSize;
 
 public:
     CMedianFilter(unsigned int _size, T initial_value) : nSize(_size)
     {
-        vValues.reserve(_size);
-        vValues.push_back(initial_value);
-        vSorted = vValues;
+        input(initial_value);
     }
 
     void input(T value)
     {
-        if (vValues.size() == nSize) {
-            vValues.erase(vValues.begin());
+        if (vValues.size() == nSize)
+        {
+            auto evicted = vValues.front();
+            vValues.pop_front();
+            auto it = std::find(vSorted.begin(), vSorted.end(), evicted);
+            if (it != vSorted.end())
+            {
+                vSorted.erase(it);
+            }
         }
         vValues.push_back(value);
 
-        vSorted.resize(vValues.size());
-        std::copy(vValues.begin(), vValues.end(), vSorted.begin());
-        std::sort(vSorted.begin(), vSorted.end());
+        auto it = vSorted.begin();
+        while (it != vSorted.end() && *it <= value)
+        {
+            ++it;
+        }
+        vSorted.insert(it, value);
     }
 
     T median() const
